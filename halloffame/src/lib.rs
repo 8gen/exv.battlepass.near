@@ -12,6 +12,7 @@ use near_sdk::{
     Promise,
     Gas,
     Balance,
+    json_types::U128,
 };
 use serde::{Serialize, Deserialize};
 
@@ -49,7 +50,8 @@ pub struct Config {
     pub signer_pk: Option<String>,
     pub private_sale_timestamp: u64,
     pub open_sale_timestamp: u64,
-    pub price_in_yocto: Balance,
+    pub curret_timestamp: u64,
+    pub price_in_yocto: U128,
     pub stage: String,
     pub motivation: String,
 }
@@ -98,10 +100,11 @@ impl Contract {
         Config {
             signer_pk: self.signer_pk,
             nft_account_id: self.nft_account_id,
-            price_in_yocto: self.price_in_yocto,
-            private_sale_timestamp: self.private_sale_timestamp,
-            open_sale_timestamp: self.open_sale_timestamp,
-            stage: match env::block_timestamp() / 1_000_000_000_u64 {
+            price_in_yocto: self.price_in_yocto.into(),
+            private_sale_timestamp: self.private_sale_timestamp / 1_000_000_000_u64,
+            open_sale_timestamp: self.open_sale_timestamp / 1_000_000_000_u64,
+            curret_timestamp: env::block_timestamp() / 1_000_000_000_u64,
+            stage: match env::block_timestamp() {
                 ts if self.private_sale_timestamp == 0 || ts < self.private_sale_timestamp => {
                     "SOON".to_string()
                 },

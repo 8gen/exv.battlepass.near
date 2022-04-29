@@ -41,6 +41,7 @@ pub trait Payouts {
         balance: U128,
         max_len_payout: Option<u32>,
     ) -> Payout;
+    fn update_royalties(&mut self, royalties: Royalties) -> Option<Royalties>;
 }
 
 #[near_bindgen]
@@ -76,6 +77,12 @@ impl Payouts for Contract {
             memo.clone(),
         );
         payout
+    }
+
+    fn update_royalties(&mut self, royalties: Royalties) -> Option<Royalties> {
+        self.assert_owner_or_operator();
+        royalties.validate();
+        self.royalties.replace(&royalties)
     }
 }
 

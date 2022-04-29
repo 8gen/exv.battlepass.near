@@ -9,7 +9,7 @@ use near_sdk_sim::{
 };
 use sha3::{Digest, Keccak256};
 
-use halloffame::ContractContract as HallContract;
+use halloffame::{ContractContract as HallContract, Config};
 use nft::ContractContract as NftContract;
 
 
@@ -116,12 +116,18 @@ impl Runner {
         match to {
             to @ MomentInTime::BeforePrivate => {
                 call!(self.root, hall.sudo_config(None, None, None, Some(now + 100), Some(now + 110), None));
+                let config: Config = view!(hall.config()).unwrap_json();
+                assert_eq!(config.stage, "SOON");
             },
             to @ MomentInTime::AfterPrivate => {
                 call!(self.root, hall.sudo_config(None, None, None, Some(now - 10), Some(now - 5), None));
+                let config: Config = view!(hall.config()).unwrap_json();
+                assert_eq!(config.stage, "OPEN");
             },
             to @ MomentInTime::InPrivate => {
                 call!(self.root, hall.sudo_config(None, None, None, Some(now - 10), Some(now + 100), None));
+                let config: Config = view!(hall.config()).unwrap_json();
+                assert_eq!(config.stage, "PRIVATE");
             },
         }
         self
