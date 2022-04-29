@@ -1,5 +1,5 @@
 use crate::*;
-use near_sdk::{serde_json::{self, json}, near_bindgen, json_types::Base64VecU8};
+use near_sdk::{serde_json::json, near_bindgen, json_types::Base64VecU8};
 
 
 #[derive(BorshStorageKey, BorshSerialize)]

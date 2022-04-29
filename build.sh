@@ -4,4 +4,4 @@ set -e
 cd "`dirname $0`"
 cargo build --all --target wasm32-unknown-unknown --release
 cp $TARGET/wasm32-unknown-unknown/release/nft.wasm ./res/
-cp $TARGET/wasm32-unknown-unknown/release/halloffame.wasm ./res/
+cp $TARGET/wasm32-unknown-unknown/release/halloffame.wasm ./res/hall.wasm

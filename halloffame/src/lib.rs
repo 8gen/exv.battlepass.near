@@ -1,7 +1,4 @@
-use near_contract_standards::non_fungible_token::{
-    metadata::TokenMetadata,
-    Token,
-};
+use near_contract_standards::non_fungible_token::Token;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::{UnorderedSet, UnorderedMap},
@@ -108,7 +105,7 @@ impl Contract {
             private_sale_timestamp: self.private_sale_timestamp,
             open_sale_timestamp: self.open_sale_timestamp,
             stage: match env::block_timestamp() / 1_000_000_000_u64 {
-                ts if ts < self.private_sale_timestamp => {
+                ts if self.private_sale_timestamp == 0 || ts < self.private_sale_timestamp => {
                     "SOON".to_string()
                 },
                 ts if ts < self.open_sale_timestamp => {

@@ -40,7 +40,7 @@ if [[ $INIT_NFT_TIME ]];then
 fi
 if [[ $INIT_HALL_TIME ]];then
     echo "init HALL"
-    near call ${HALL_CONTRACT} init '{"nft_account_id": "'${NFT_CONTRACT}'"}'  --accountId ${OWNER_ID}
+    near call ${HALL_CONTRACT} new '{"nft_account_id": "'${NFT_CONTRACT}'"}'  --accountId ${OWNER_ID}
 fi
 echo HALL CONTRACT is ${HALL_CONTRACT}
 echo NFT CONTRACT is ${NFT_CONTRACT}
