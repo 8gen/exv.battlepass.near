@@ -3,7 +3,6 @@ use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::{UnorderedSet, UnorderedMap},
     PromiseResult,
-    callback,
     ext_contract,
     env,
     near_bindgen,
@@ -22,8 +21,6 @@ mod external;
 mod owner;
 mod crypto;
 mod utils;
-
-near_sdk::setup_alloc!();
 
 
 #[near_bindgen]
@@ -138,7 +135,6 @@ impl Contract {
         update_if_exists!(self, signer_pk, Some(signer_pk));
     }
 
-    #[callback]
     #[private]
     pub fn callback_on_nft_mints(&mut self, price: Balance, attached_deposit: Balance, desired_amount: u32) -> Vec<Token> {
         assert_eq!(env::predecessor_account_id(), env::current_account_id(), "ERR_WRONG_CALLBACK");
@@ -200,23 +196,23 @@ impl Contract {
             assert!(already_sold + amount <= permitted_amount, "ERR_TOO_MUCH");
 
         } else {
-            env::panic(b"ERR_NOT_STARTED");
+            env::panic_str("ERR_NOT_STARTED");
         }
 
 
         assert!(attached_deposit > amount as u128 * self.price_in_yocto, "ERR_NOT_ENOUGH");
 
         ext_nft::nft_mints(
-            env::predecessor_account_id(),
+            env::predecessor_account_id().to_string(),
             amount,
-            &self.nft_account_id,
+            self.nft_account_id.clone(),
             10_u128.pow(22) * amount as u128,
             GAS_FOR_NFT_MINT_CALL
         ).then(ext_halloffame::callback_on_nft_mints(
             self.price_in_yocto,
             env::attached_deposit(),
             amount,
-            &env::current_account_id(),
+            env::current_account_id(),
             0,
             GAS_FOR_RESOLVE_TRANSFER,
         ))

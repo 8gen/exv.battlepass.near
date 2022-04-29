@@ -9,11 +9,10 @@ use near_contract_standards::non_fungible_token::{
     },
     Token,
     TokenId,
-    NonFungibleToken, refund_deposit,
+    NonFungibleToken,
 };
 use near_sdk::{borsh::{self, BorshDeserialize, BorshSerialize}, collections::UnorderedSet};
 use near_sdk::collections::LazyOption;
-use near_sdk::json_types::ValidAccountId;
 use near_sdk::{
     ext_contract,
     env,
@@ -33,8 +32,6 @@ mod external;
 mod mint;
 mod owner;
 mod utils;
-
-near_sdk::setup_alloc!();
 
 
 const DATA_IMAGE_SVG_ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' xml:space='preserve'%3E%3Cdefs/%3E%3CclipPath id='ArtboardFrame'%3E%3Crect height='512' width='512' x='0' y='0'/%3E%3C/clipPath%3E%3Cg clip-path='url(%23ArtboardFrame)'%3E%3Cpath d='M13.3866 157.467L160.015 75.543L200.383 215.639L292.401 36.3624L379.217 21.8194L385.004 101.962L412.167 15.5799L511.452 0L269.243 316.555L340.479 480.403L206.019 512.458L167.734 413.616L102.728 512.458L3 480.403L100.061 331.701L13.3866 157.467Z' fill='%23d512f6' fill-rule='evenodd' opacity='1' stroke='none'/%3E%3C/g%3E%3C/svg%3E";
@@ -97,7 +94,6 @@ impl Contract {
             operators: UnorderedSet::new(StorageKey::Operator),
         }
     }
-
 }
 
 near_contract_standards::impl_non_fungible_token_core!(Contract, tokens);
