@@ -56,6 +56,7 @@ pub struct Config {
     pub private_sale_timestamp: u64,
     pub open_sale_timestamp: u64,
     pub price_in_yocto: Balance,
+    pub stage: String,
     pub motivation: String,
 }
 
@@ -106,6 +107,17 @@ impl Contract {
             price_in_yocto: self.price_in_yocto,
             private_sale_timestamp: self.private_sale_timestamp,
             open_sale_timestamp: self.open_sale_timestamp,
+            stage: match env::block_timestamp() / 1_000_000_000_u64 {
+                ts if ts < self.private_sale_timestamp => {
+                    "SOON".to_string()
+                },
+                ts if ts < self.open_sale_timestamp => {
+                    "PRIVATE".to_string()
+                },
+                _ => {
+                    "OPEN".to_string()
+                }
+            },
             motivation: "The zero city is coming".to_string()
         }
     }
