@@ -1,0 +1,32 @@
+[package]
+name = "exv"
+version = "0.1.0"
+authors = ["Nikita Kuznetsov <n@8gen.team>"]
+edition = "2018"
+
+[dependencies]
+near-sdk = "3.1.0"
+near-sdk-sim = "3.2.0"
+near-contract-standards = "3.1.1"
+rand = "0.7.3"
+sha3 = "0.9.1"
+libsecp256k1 = "0.7.0"
+hex = "0.4.3"
+
+halloffame = { path = "./halloffame" }
+nft = { path = "./nft" }
+
+[profile.release]
+codegen-units = 1
+# Tell `rustc` to optimize for small code size.
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true
+
+[workspace]
+members = [
+  "halloffame",
+  "nft",
+]

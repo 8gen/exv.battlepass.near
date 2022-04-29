@@ -1,0 +1,4 @@
+contract/target
+node_modules/
+target/
+res/
