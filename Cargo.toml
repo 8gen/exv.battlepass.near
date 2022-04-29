@@ -5,9 +5,9 @@ authors = ["Nikita Kuznetsov <n@8gen.team>"]
 edition = "2018"
 
 [dependencies]
-near-sdk = "3.1.0"
-near-sdk-sim = "3.2.0"
-near-contract-standards = "3.1.1"
+near-sdk = "4.0.0-pre.8"
+near-sdk-sim = "4.0.0-pre.8"
+near-contract-standards = "4.0.0-pre.8"
 rand = "0.7.3"
 sha3 = "0.9.1"
 libsecp256k1 = "0.7.0"

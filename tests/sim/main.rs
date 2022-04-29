@@ -18,7 +18,7 @@ mod test_private;
 // Load in contract bytes at runtime
 near_sdk_sim::lazy_static_include::lazy_static_include_bytes! {
     NFT_WASM_BYTES => "res/nft.wasm",
-    HALLOFFAME_WASM_BYTES => "res/halloffame.wasm",
+    HALLOFFAME_WASM_BYTES => "res/hall.wasm",
 }
 
 
@@ -57,16 +57,16 @@ impl Runner {
             signer_account: root,
             init_method: new_default_meta(max_supply, "NAME".to_string(), "SYMBOL".to_string())
         );
-        let alice = root.create_user("alice".to_string(), to_yocto("100"));
-        let bob = root.create_user("bob".to_string(), to_yocto("100"));
-        let eva = root.create_user("eva".to_string(), to_yocto("100"));
+        let alice = root.create_user("alice".parse().unwrap(), to_yocto("100"));
+        let bob = root.create_user("bob".parse().unwrap(), to_yocto("100"));
+        let eva = root.create_user("eva".parse().unwrap(), to_yocto("100"));
 
         let hall = deploy!(
             contract: HallContract,
             contract_id: HALL_ID,
             bytes: &HALLOFFAME_WASM_BYTES,
             signer_account: root,
-            init_method: new(nft.valid_account_id().to_string())
+            init_method: new(nft.account_id())
         );
         let sk = secp256k1::SecretKey::default();
         let pk = secp256k1::PublicKey::from_secret_key(&sk);
@@ -143,7 +143,7 @@ impl Runner {
         let nft = &self.nft;
         call!(
             self.root,
-            nft.nft_mints(self.root.valid_account_id(), amount),
+            nft.nft_mints(self.root.account_id(), amount),
             deposit = to_yocto("1")
         ).assert_success();
     }
