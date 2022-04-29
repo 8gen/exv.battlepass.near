@@ -28,6 +28,8 @@ use near_sdk::{
 
 pub use crate::external::*;
 pub use crate::utils::*;
+pub use crate::payout::Royalties;
+mod payout;
 mod external;
 mod mint;
 mod owner;
@@ -41,6 +43,7 @@ const DATA_IMAGE_SVG_ICON: &str = "data:image/svg+xml,%3Csvg xmlns='http://www.w
 pub struct Contract {
     next_token_id: u64,
     max_supply: u64,
+    royalties: LazyOption<Royalties>,
     tokens: NonFungibleToken,
     operators: UnorderedSet<AccountId>,
     metadata: LazyOption<NFTContractMetadata>,
@@ -53,6 +56,7 @@ enum StorageKey {
     TokenMetadata,
     Enumeration,
     Approval,
+    Royalties,
     Operator,
 }
 
@@ -61,7 +65,11 @@ impl Contract {
     /// Initializes the contract owned by `owner_id` with
     /// default metadata (for example purposes only).
     #[init]
-    pub fn new_default_meta(max_supply: u64, name: String, symbol: String) -> Self {
+    pub fn new_default_meta(
+        max_supply: u64,
+        name: String,
+        symbol: String,
+    ) -> Self {
         Self::new(
             max_supply,
             NFTContractMetadata {
@@ -73,11 +81,16 @@ impl Contract {
                 reference: None,
                 reference_hash: None,
             },
+            Some(Royalties::default()),
         )
     }
 
     #[init]
-    pub fn new(max_supply: u64, metadata: NFTContractMetadata) -> Self {
+    pub fn new(
+        max_supply: u64,
+        metadata: NFTContractMetadata,
+        royalties: Option<Royalties>,
+    ) -> Self {
         assert!(!env::state_exists(), "Already initialized");
         metadata.assert_valid();
         Self {
@@ -90,6 +103,7 @@ impl Contract {
                 Some(StorageKey::Enumeration),
                 Some(StorageKey::Approval),
             ),
+            royalties: LazyOption::new(StorageKey::Royalties, royalties.as_ref()),
             metadata: LazyOption::new(StorageKey::Metadata, Some(&metadata)),
             operators: UnorderedSet::new(StorageKey::Operator),
         }

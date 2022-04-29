@@ -18,7 +18,7 @@ impl Contract {
             description: Some("".to_string()),
             media: Some("bafybeiecgdaszggkgwcr7lzicxrsxsrz5gbdjjjeerfz7mg6p4qip5z6oi".to_string()),
             media_hash: Some(Base64VecU8("l6EaCpTmk17U3YkcyTV1wKErgBrKMPzKVQFGTProljQ=".into())),
-            copies: Some(self.max_supply),
+            copies: Some(1),
             issued_at: Some(env::block_timestamp().to_string()),
             expires_at: None,
             starts_at: None,
