@@ -207,6 +207,7 @@ impl Contract {
 
         if self.open_sale_timestamp < env::block_timestamp() {
             // Skip check, already public
+            assert!(already_sold + amount <= 2, "ERR_TOO_MUCH");
         } else if self.private_sale_timestamp < env::block_timestamp()
             && permitted_amount.is_some()
             && signature.is_some() {
@@ -222,7 +223,6 @@ impl Contract {
                 "ERR_WRONG_SIG:PAYLOAD"
             );
             assert!(already_sold + amount <= permitted_amount, "ERR_TOO_MUCH");
-
         } else {
             env::panic_str("ERR_NOT_STARTED");
         }

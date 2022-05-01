@@ -171,6 +171,11 @@ impl Runner {
         self.internal_sacrifice(price, amount, Some(2), Some(signature))
     }
 
+    pub fn personal_sacrifice_force(&self, price: u128, amount: u32) -> bool {
+        let signature = self.sign(&self.alice, amount);
+        self.internal_sacrifice(price, amount, Some(amount), Some(signature))
+    }
+
     pub fn personal_sacrifice_signed(&self, price: u128, amount: u32, permitted_amount: u32, sign: String) -> bool {
         self.internal_sacrifice(price, amount, Some(permitted_amount), Some(sign))
     }
@@ -179,12 +184,13 @@ impl Runner {
         let hall = &self.hall;
         let tx = call!(
             self.alice,
-            hall.sacrifice(amount, permitted_amount, sign),
+            hall.sacrifice(amount, permitted_amount, sign.clone()),
             deposit,
             GAS_FOR_RESOLVE_TRANSFER.0 + GAS_FOR_SACRIFICE.0 + GAS_FOR_NFT_MINT_CALL.0 * amount as u64
         );
         println!("TX: {:?}", tx);
         println!("Promise: {:?}", tx.promise_results());
+        println!("Sig: {:?}", sign.clone());
         match tx.is_ok() {
             true => {
                 let tokens: Vec<Token> = tx.unwrap_json();
