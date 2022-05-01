@@ -11,7 +11,7 @@ use near_contract_standards::non_fungible_token::{
     TokenId,
     NonFungibleToken,
 };
-use near_sdk::{borsh::{self, BorshDeserialize, BorshSerialize}, collections::UnorderedSet};
+use near_sdk::{borsh::{self, BorshDeserialize, BorshSerialize}, collections::UnorderedSet, require};
 use near_sdk::collections::LazyOption;
 use near_sdk::{
     ext_contract,
@@ -81,6 +81,12 @@ impl Contract {
             },
             Some(Royalties::default()),
         )
+    }
+
+    pub fn set_max_supply(&mut self, max_supply: u64) {
+        self.assert_owner_or_operator();
+        require!(max_supply > 0, "ERR_MAX_SUPPLY_TO_LOW");
+        self.max_supply = max_supply;
     }
 
     #[init]
