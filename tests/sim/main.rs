@@ -4,20 +4,14 @@ use std::convert::TryInto;
 use libsecp256k1 as secp256k1;
 use near_contract_standards::non_fungible_token::Token;
 use near_sdk::json_types::U128;
-use near_sdk_sim::{
-    deploy, init_simulator, to_yocto, ContractAccount, UserAccount, view, call,
-};
+use near_sdk_sim::{call, deploy, init_simulator, to_yocto, view, ContractAccount, UserAccount};
 use sha3::{Digest, Keccak256};
 
 use halloffame::{
-    ContractContract as HallContract,
-    Config,
+    Config, ContractContract as HallContract, GAS_FOR_NFT_MINT_CALL, GAS_FOR_RESOLVE_TRANSFER,
     GAS_FOR_SACRIFICE,
-    GAS_FOR_RESOLVE_TRANSFER,
-    GAS_FOR_NFT_MINT_CALL
 };
 use nft::ContractContract as NftContract;
-
 
 mod test_private;
 
@@ -27,17 +21,14 @@ near_sdk_sim::lazy_static_include::lazy_static_include_bytes! {
     HALLOFFAME_WASM_BYTES => "res/hall.wasm",
 }
 
-
 const NFT_ID: &str = "nft";
 const HALL_ID: &str = "halloffame";
-
 
 enum MomentInTime {
     BeforePrivate,
     InPrivate,
-    AfterPrivate
+    AfterPrivate,
 }
-
 
 struct Runner {
     hall: ContractAccount<HallContract>,
@@ -46,7 +37,7 @@ struct Runner {
     alice: UserAccount,
     bob: UserAccount,
     keypair: secp256k1::SecretKey,
-    eva: UserAccount
+    eva: UserAccount,
 }
 
 impl Runner {
@@ -80,19 +71,16 @@ impl Runner {
         call!(
             root,
             hall.sudo_config(
-                None, None, None, None, None,
+                None,
+                None,
+                None,
+                None,
+                None,
                 Some(hex::encode(pk.serialize_compressed()))
             )
-        ).assert_success();
-        Self {
-            root,
-            nft,
-            hall,
-            keypair: sk,
-            alice,
-            bob,
-            eva
-        }
+        )
+        .assert_success();
+        Self { root, nft, hall, keypair: sk, alice, bob, eva }
     }
 
     fn hash(&self, message: String) -> [u8; 32] {
@@ -118,23 +106,33 @@ impl Runner {
 
     pub fn time_travel_to(&mut self, to: MomentInTime) -> &mut Runner {
         let hall = &self.hall;
-        let now: u32 = (self.root.borrow_runtime().current_block().block_timestamp / 1_000_000_000) as u32;
+        let now: u32 =
+            (self.root.borrow_runtime().current_block().block_timestamp / 1_000_000_000) as u32;
         match to {
             to @ MomentInTime::BeforePrivate => {
-                call!(self.root, hall.sudo_config(None, None, None, Some(now + 100), Some(now + 110), None));
+                call!(
+                    self.root,
+                    hall.sudo_config(None, None, None, Some(now + 100), Some(now + 110), None)
+                );
                 let config: Config = view!(hall.config()).unwrap_json();
                 assert_eq!(config.stage, "SOON");
-            },
+            }
             to @ MomentInTime::AfterPrivate => {
-                call!(self.root, hall.sudo_config(None, None, None, Some(now - 10), Some(now - 5), None));
+                call!(
+                    self.root,
+                    hall.sudo_config(None, None, None, Some(now - 10), Some(now - 5), None)
+                );
                 let config: Config = view!(hall.config()).unwrap_json();
                 assert_eq!(config.stage, "OPEN");
-            },
+            }
             to @ MomentInTime::InPrivate => {
-                call!(self.root, hall.sudo_config(None, None, None, Some(now - 10), Some(now + 100), None));
+                call!(
+                    self.root,
+                    hall.sudo_config(None, None, None, Some(now - 10), Some(now + 100), None)
+                );
                 let config: Config = view!(hall.config()).unwrap_json();
                 assert_eq!(config.stage, "PRIVATE");
-            },
+            }
         }
         self
     }
@@ -144,7 +142,7 @@ impl Runner {
         let possible_diff = to_yocto("0.5");
         let is_ok = match amount {
             0 => (amount + possible_diff) > diff,
-            _ => (amount + possible_diff) > diff && diff > (amount - possible_diff)
+            _ => (amount + possible_diff) > diff && diff > (amount - possible_diff),
         };
 
         assert!(is_ok, "100 NEAR - {} = {}", amount, diff);
@@ -152,11 +150,8 @@ impl Runner {
 
     pub fn take_out(&self, amount: u32) {
         let nft = &self.nft;
-        call!(
-            self.root,
-            nft.nft_mints(self.root.account_id(), amount),
-            deposit = to_yocto("1")
-        ).assert_success();
+        call!(self.root, nft.nft_mints(self.root.account_id(), amount), deposit = to_yocto("1"))
+            .assert_success();
     }
 
     pub fn change_price(&self, price: u128) {
@@ -176,17 +171,31 @@ impl Runner {
         self.internal_sacrifice(price, amount, Some(amount), Some(signature))
     }
 
-    pub fn personal_sacrifice_signed(&self, price: u128, amount: u32, permitted_amount: u32, sign: String) -> bool {
+    pub fn personal_sacrifice_signed(
+        &self,
+        price: u128,
+        amount: u32,
+        permitted_amount: u32,
+        sign: String,
+    ) -> bool {
         self.internal_sacrifice(price, amount, Some(permitted_amount), Some(sign))
     }
 
-    fn internal_sacrifice(&self, deposit: u128, amount: u32, permitted_amount: Option<u32>, sign: Option<String>) -> bool {
+    fn internal_sacrifice(
+        &self,
+        deposit: u128,
+        amount: u32,
+        permitted_amount: Option<u32>,
+        sign: Option<String>,
+    ) -> bool {
         let hall = &self.hall;
         let tx = call!(
             self.alice,
             hall.sacrifice(amount, permitted_amount, sign.clone()),
             deposit,
-            GAS_FOR_RESOLVE_TRANSFER.0 + GAS_FOR_SACRIFICE.0 + GAS_FOR_NFT_MINT_CALL.0 * amount as u64
+            GAS_FOR_RESOLVE_TRANSFER.0
+                + GAS_FOR_SACRIFICE.0
+                + GAS_FOR_NFT_MINT_CALL.0 * amount as u64
         );
         println!("TX: {:?}", tx);
         println!("Promise: {:?}", tx.promise_results());
@@ -195,10 +204,8 @@ impl Runner {
             true => {
                 let tokens: Vec<Token> = tx.unwrap_json();
                 tokens.len() as u32 == amount
-            },
-            false => {
-                false
             }
+            false => false,
         }
     }
 

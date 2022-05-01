@@ -1,6 +1,5 @@
 use crate::*;
 
-
 pub const NO_DEPOSIT: Balance = 0;
 pub const ONE: Balance = 1 * 10u128.pow(18);
 

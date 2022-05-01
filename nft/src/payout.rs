@@ -3,9 +3,9 @@ use near_sdk::{
     assert_one_yocto,
     borsh::{self, BorshDeserialize, BorshSerialize},
     json_types::U128,
-    near_bindgen,
+    near_bindgen, require,
     serde::{Deserialize, Serialize},
-    AccountId, require,
+    AccountId,
 };
 
 use std::collections::HashMap;
@@ -48,14 +48,8 @@ pub trait Payouts {
 impl Payouts for Contract {
     #[allow(unused_variables)]
     fn nft_payout(&self, token_id: String, balance: U128, max_len_payout: Option<u32>) -> Payout {
-        let owner_id = self
-            .tokens
-            .owner_by_id
-            .get(&token_id)
-            .expect("No such token_id");
-        self.royalties
-            .get()
-            .map_or(Payout::default(), |r| r.create_payout(balance.0, &owner_id))
+        let owner_id = self.tokens.owner_by_id.get(&token_id).expect("No such token_id");
+        self.royalties.get().map_or(Payout::default(), |r| r.create_payout(balance.0, &owner_id))
     }
 
     #[payable]
@@ -70,12 +64,7 @@ impl Payouts for Contract {
     ) -> Payout {
         assert_one_yocto();
         let payout = self.nft_payout(token_id.clone(), balance, max_len_payout);
-        self.nft_transfer(
-            receiver_id.clone(),
-            token_id.clone(),
-            approval_id.clone(),
-            memo.clone(),
-        );
+        self.nft_transfer(receiver_id.clone(), token_id.clone(), approval_id.clone(), memo.clone());
         payout
     }
 
@@ -94,10 +83,7 @@ pub struct Royalties {
 
 impl Royalties {
     pub(crate) fn validate(&self) {
-        require!(
-            self.percent <= 100,
-            "royalty percent must be between 0 - 100"
-        );
+        require!(self.percent <= 100, "royalty percent must be between 0 - 100");
         require!(
             self.accounts.len() <= 10,
             "can only have a maximum of 10 accounts spliting royalties"
@@ -107,10 +93,7 @@ impl Royalties {
             require!(*percent <= 100, "each royalty should be less than 100");
             total += percent;
         });
-        require!(
-            total <= 100,
-            "total percent of each royalty split  must be less than 100"
-        )
+        require!(total <= 100, "total percent of each royalty split  must be less than 100")
     }
     fn create_payout(&self, balance: Balance, owner_id: &AccountId) -> Payout {
         let royalty_payment = apply_percent(self.percent, balance);
@@ -119,10 +102,7 @@ impl Royalties {
                 .accounts
                 .iter()
                 .map(|(account, percent)| {
-                    (
-                        account.clone(),
-                        apply_percent(*percent, royalty_payment).into(),
-                    )
+                    (account.clone(), apply_percent(*percent, royalty_payment).into())
                 })
                 .collect(),
         };
