@@ -56,6 +56,12 @@ pub struct Config {
     pub motivation: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct Status {
+    pub config: Config,
+    pub sold: u32,
+}
+
 macro_rules! update_if_exists {
     ($self:tt, $l:tt) => { 
         if let Some($l) = $l {
@@ -74,7 +80,7 @@ trait Contract {
     fn callback_on_nft_mints(&mut self, price: Balance, attached_deposit: Balance, desired_amount: u32) -> Vec<Token>;
 }
 
-const MINT_COST: u128 = 5_u128.pow(21);
+const MINT_COST: u128 = 10_u128.pow(20) * 125;
 
 
 #[near_bindgen]
@@ -92,6 +98,22 @@ impl Contract {
             sold: UnorderedMap::new(StorageKey::Sold),
             private_sale_timestamp: 0,
             open_sale_timestamp: 0,
+        }
+    }
+
+    pub fn status(self, account_id: AccountId) -> Status {
+        assert!(env::state_exists(), "State is not initialized");
+        let sold = match self.sold.get(&account_id) {
+            None => {
+                0
+            },
+            Some(value) => {
+                value
+            }
+        };
+        Status {
+            config: self.config(),
+            sold 
         }
     }
 
@@ -123,7 +145,7 @@ impl Contract {
         &mut self,
         nft_account_id: Option<AccountId>,
         treasury_id: Option<AccountId>,
-        price_in_yocto: Option<Balance>,
+        price_in_yocto: Option<U128>,
         private_sale_timestamp: Option<u32>,
         open_sale_timestamp: Option<u32>,
         signer_pk: Option<String>,
@@ -132,7 +154,7 @@ impl Contract {
         assert!(env::state_exists(), "State is not initialized");
         update_if_exists!(self, nft_account_id);
         update_if_exists!(self, treasury_id);
-        update_if_exists!(self, price_in_yocto);
+        update_if_exists!(self, price_in_yocto, price_in_yocto.0);
         update_if_exists!(self, private_sale_timestamp, private_sale_timestamp as u64 * 1_000_000_000_u64);
         update_if_exists!(self, open_sale_timestamp, open_sale_timestamp as u64 * 1_000_000_000_u64);
         update_if_exists!(self, signer_pk, Some(signer_pk));
@@ -165,9 +187,12 @@ impl Contract {
 
     #[payable]
     pub fn sacrifice(&mut self, amount: u32, permitted_amount: Option<u32>, signature: Option<String>) -> Promise {
+        assert_ne!(self.open_sale_timestamp, 0, "ERR_NOT_STARTED");
+        assert_ne!(self.private_sale_timestamp, 0, "ERR_NOT_STARTED");
+        assert!(env::prepaid_gas() >= GAS_FOR_NFT_MINT_CALL * amount.into() + GAS_FOR_RESOLVE_TRANSFER + GAS_FOR_SACRIFICE, "ERR_NOT_ENOUGH_GAS");
+
         let receiver_id = env::predecessor_account_id();
-        let mint_cost = 5_u128.pow(21) * amount as u128;
-        let mut attached_deposit = env::attached_deposit() - mint_cost;
+        let mut attached_deposit = env::attached_deposit() - MINT_COST * amount as u128;
         let already_sold = match self.sold.get(&receiver_id) {
             None => {
                 let storage_usage = env::storage_usage();
@@ -203,14 +228,14 @@ impl Contract {
         }
 
 
-        assert!(attached_deposit > amount as u128 * self.price_in_yocto, "ERR_NOT_ENOUGH");
+        assert!(attached_deposit >= amount as u128 * self.price_in_yocto, "ERR_NOT_ENOUGH");
 
         ext_nft::nft_mints(
             env::predecessor_account_id().to_string(),
             amount,
             self.nft_account_id.clone(),
-            10_u128.pow(22) * amount as u128,
-            GAS_FOR_NFT_MINT_CALL
+            MINT_COST * amount as u128,
+            env::prepaid_gas() - GAS_FOR_SACRIFICE - GAS_FOR_RESOLVE_TRANSFER,
         ).then(ext_halloffame::callback_on_nft_mints(
             self.price_in_yocto,
             env::attached_deposit(),

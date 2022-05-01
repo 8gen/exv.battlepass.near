@@ -62,8 +62,6 @@ enum StorageKey {
 
 #[near_bindgen]
 impl Contract {
-    /// Initializes the contract owned by `owner_id` with
-    /// default metadata (for example purposes only).
     #[init]
     pub fn new_default_meta(
         max_supply: u64,

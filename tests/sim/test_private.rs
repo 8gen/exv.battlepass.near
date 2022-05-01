@@ -73,6 +73,16 @@ fn private_before_start() {
 }
 
 #[test]
+fn open_ok_many() {
+    let mut runner = Runner::default();
+    runner.time_travel_to(MomentInTime::AfterPrivate);
+    runner.change_price(1e24 as u128);
+    assert!(runner.sacrifice(to_yocto("51"), 20));
+    assert_eq!(runner.nft_total_supply(), 20);
+    runner.assert_spend_about(&runner.alice, to_yocto("20"));
+}
+
+#[test]
 fn open_ok() {
     let mut runner = Runner::default();
     runner.time_travel_to(MomentInTime::AfterPrivate);

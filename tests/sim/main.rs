@@ -9,7 +9,13 @@ use near_sdk_sim::{
 };
 use sha3::{Digest, Keccak256};
 
-use halloffame::{ContractContract as HallContract, Config};
+use halloffame::{
+    ContractContract as HallContract,
+    Config,
+    GAS_FOR_SACRIFICE,
+    GAS_FOR_RESOLVE_TRANSFER,
+    GAS_FOR_NFT_MINT_CALL
+};
 use nft::ContractContract as NftContract;
 
 
@@ -135,8 +141,7 @@ impl Runner {
 
     pub fn assert_spend_about(&self, account: &UserAccount, amount: u128) {
         let diff = to_yocto("100") - account.account().unwrap().amount;
-        let possible_diff = 10_u128.pow(23);
-
+        let possible_diff = to_yocto("0.5");
         let is_ok = match amount {
             0 => (amount + possible_diff) > diff,
             _ => (amount + possible_diff) > diff && diff > (amount - possible_diff)
@@ -154,6 +159,13 @@ impl Runner {
         ).assert_success();
     }
 
+    pub fn change_price(&self, price: u128) {
+        let hall = &self.hall;
+        call!(self.root, hall.sudo_config(None, None, Some(U128::from(price)), None, None, None));
+        let config: Config = view!(hall.config()).unwrap_json();
+        assert_eq!(config.price_in_yocto.0, price);
+    }
+
     pub fn personal_sacrifice(&self, price: u128, amount: u32) -> bool {
         let signature = self.sign(&self.alice, 2);
         self.internal_sacrifice(price, amount, Some(2), Some(signature))
@@ -168,7 +180,8 @@ impl Runner {
         let tx = call!(
             self.alice,
             hall.sacrifice(amount, permitted_amount, sign),
-            deposit = deposit 
+            deposit,
+            GAS_FOR_RESOLVE_TRANSFER.0 + GAS_FOR_SACRIFICE.0 + GAS_FOR_NFT_MINT_CALL.0 * amount as u64
         );
         println!("TX: {:?}", tx);
         println!("Promise: {:?}", tx.promise_results());
