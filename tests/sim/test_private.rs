@@ -21,7 +21,7 @@ fn private_not_enough() {
 fn private_ok() {
     let mut runner = Runner::default();
     runner.time_travel_to(MomentInTime::InPrivate);
-    assert!(runner.personal_sacrifice(to_yocto("17.6"), 1));
+    assert!(runner.personal_sacrifice(to_yocto("17.5") + to_yocto("0.01"), 1));
     runner.assert_spend_about(&runner.alice, to_yocto("17.5"));
     assert_eq!(runner.nft_total_supply(), 1);
 }

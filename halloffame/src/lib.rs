@@ -76,7 +76,7 @@ trait Contract {
     ) -> Vec<Token>;
 }
 
-const MINT_COST: u128 = 10_u128.pow(20) * 125;
+const MINT_COST: u128 = 10_u128.pow(20) * 80;
 
 #[near_bindgen]
 impl Contract {
@@ -172,8 +172,9 @@ impl Contract {
                 let tokens: Vec<Token> =
                     near_sdk::serde_json::from_slice(&val).expect("ERR_WRONG_VAL_RECEIVED");
                 let actual_amount = tokens.len() as u32;
-                let refund: Balance =
-                    attached_deposit - actual_amount as u128 * (price + MINT_COST);
+                let refund: Balance = attached_deposit
+                    + (desired_amount - actual_amount) as u128 * (MINT_COST + price)
+                    - (actual_amount) as u128 * price;
                 let already_sold = self.sold.get(&env::signer_account_id()).unwrap();
                 self.sold.insert(&env::signer_account_id(), &(already_sold + actual_amount));
 
@@ -249,7 +250,7 @@ impl Contract {
         )
         .then(ext_halloffame::callback_on_nft_mints(
             self.price_in_yocto,
-            env::attached_deposit(),
+            attached_deposit,
             amount,
             env::current_account_id(),
             0,

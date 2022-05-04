@@ -13,6 +13,7 @@ use halloffame::{
 };
 use nft::ContractContract as NftContract;
 
+mod test_open;
 mod test_private;
 
 // Load in contract bytes at runtime
@@ -139,6 +140,7 @@ impl Runner {
 
     pub fn assert_spend_about(&self, account: &UserAccount, amount: u128) {
         let diff = to_yocto("100") - account.account().unwrap().amount;
+
         let possible_diff = to_yocto("0.5");
         let is_ok = match amount {
             0 => (amount + possible_diff) > diff,
@@ -200,6 +202,8 @@ impl Runner {
         println!("TX: {:?}", tx);
         println!("Promise: {:?}", tx.promise_results());
         println!("Sig: {:?}", sign.clone());
+        println!("Token burnts {:?}", tx.tokens_burnt());
+        println!("Gas burnts {:?}", tx.gas_burnt());
         match tx.is_ok() {
             true => {
                 let tokens: Vec<Token> = tx.unwrap_json();

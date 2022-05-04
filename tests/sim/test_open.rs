@@ -22,7 +22,7 @@ fn open_ok_many() {
 fn open_ok() {
     let mut runner = Runner::default();
     runner.time_travel_to(MomentInTime::AfterPrivate);
-    assert!(runner.sacrifice(to_yocto("50"), 2));
+    assert!(runner.sacrifice(to_yocto("17.5") * 2 + to_yocto("0.05") * 2, 2));
     assert_eq!(runner.nft_total_supply(), 2);
     runner.assert_spend_about(&runner.alice, to_yocto("17.5") * 2);
 }
