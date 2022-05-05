@@ -22,6 +22,7 @@ pub use crate::payout::Royalties;
 pub use crate::utils::*;
 mod external;
 mod mint;
+mod mints;
 mod owner;
 mod payout;
 mod utils;
@@ -69,6 +70,19 @@ impl Contract {
         )
     }
 
+    pub fn set_metadata(&mut self, name: String, symbol: String, base_uri: Option<String>) {
+        self.assert_owner_or_operator();
+        self.metadata.set(&NFTContractMetadata {
+            spec: NFT_METADATA_SPEC.to_string(),
+            name,
+            symbol,
+            icon: Some(DATA_IMAGE_SVG_ICON.to_string()),
+            base_uri,
+            reference: None,
+            reference_hash: None,
+        });
+    }
+
     pub fn set_max_supply(&mut self, max_supply: u64) {
         self.assert_owner_or_operator();
         require!(max_supply > 0, "ERR_MAX_SUPPLY_TO_LOW");
@@ -88,7 +102,7 @@ impl Contract {
             max_supply,
             tokens: NonFungibleToken::new(
                 StorageKey::NonFungibleToken,
-                env::current_account_id().to_string().try_into().unwrap(),
+                env::predecessor_account_id(),
                 Some(StorageKey::TokenMetadata),
                 Some(StorageKey::Enumeration),
                 Some(StorageKey::Approval),

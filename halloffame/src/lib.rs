@@ -14,6 +14,7 @@ mod crypto;
 mod external;
 mod owner;
 mod utils;
+mod web4;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -39,6 +40,7 @@ enum StorageKey {
 pub struct Config {
     pub nft_account_id: AccountId,
     pub signer_pk: Option<String>,
+    pub owner_id: AccountId,
     pub private_sale_timestamp: u64,
     pub open_sale_timestamp: u64,
     pub curret_timestamp: u64,
@@ -109,6 +111,7 @@ impl Contract {
         assert!(env::state_exists(), "State is not initialized");
         Config {
             signer_pk: self.signer_pk,
+            owner_id: self.owner_id,
             nft_account_id: self.nft_account_id,
             price_in_yocto: self.price_in_yocto.into(),
             private_sale_timestamp: self.private_sale_timestamp / 1_000_000_000_u64,
@@ -121,7 +124,7 @@ impl Contract {
                 ts if ts < self.open_sale_timestamp => "PRIVATE".to_string(),
                 _ => "OPEN".to_string(),
             },
-            motivation: "The zero city is coming".to_string(),
+            motivation: "The zero city is coming. <3 Human Guild!".to_string(),
         }
     }
 
@@ -177,6 +180,9 @@ impl Contract {
                     - (actual_amount) as u128 * price;
                 let already_sold = self.sold.get(&env::signer_account_id()).unwrap();
                 self.sold.insert(&env::signer_account_id(), &(already_sold + actual_amount));
+
+                Promise::new(self.owner_id.clone())
+                    .transfer(self.price_in_yocto * actual_amount as u128);
 
                 if refund > 0 {
                     Promise::new(env::signer_account_id()).transfer(refund);

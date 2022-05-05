@@ -36,7 +36,7 @@ HALL_CONTRACT=$(cat ${ROOT}/neardev/hall/dev-account)
 
 if [[ $INIT_NFT_TIME ]];then
     echo "init NFT"
-    near call ${NFT_CONTRACT} new_default_meta '{"max_supply": 2000, "name": "NAME", "symbol": "SYMBOL"}' --accountId ${OWNER_ID}
+    near call ${NFT_CONTRACT} new_default_meta '{"max_supply": 1000, "name": "Exverse pass", "symbol": "EXVPASS"}' --accountId ${OWNER_ID}
 fi
 if [[ $INIT_HALL_TIME ]];then
     echo "init HALL"

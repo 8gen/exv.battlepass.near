@@ -66,6 +66,9 @@ impl Runner {
             signer_account: root,
             init_method: new(nft.account_id())
         );
+
+        let tx = call!(root, nft.extend_operators(vec![hall.account_id()]), deposit = 1);
+        tx.assert_success();
         let sk = secp256k1::SecretKey::default();
         let pk = secp256k1::PublicKey::from_secret_key(&sk);
 
@@ -204,6 +207,7 @@ impl Runner {
         println!("Sig: {:?}", sign.clone());
         println!("Token burnts {:?}", tx.tokens_burnt());
         println!("Gas burnts {:?}", tx.gas_burnt());
+
         match tx.is_ok() {
             true => {
                 let tokens: Vec<Token> = tx.unwrap_json();
